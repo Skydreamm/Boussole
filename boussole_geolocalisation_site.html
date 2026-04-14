@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boussole GPS</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --muted: #94a3b8;
+      --text: #f8fafc;
+      --accent: #22c55e;
+      --accent-2: #38bdf8;
+      --danger: #ef4444;
+      --border: rgba(255,255,255,0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0%, var(--bg) 55%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(17, 24, 39, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      padding: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      text-align: center;
+    }
+
+    .sub {
+      margin: 0 0 22px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 18px;
+      color: var(--accent-2);
+      min-height: 22px;
+    }
+
+    .compass-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 14px 0 24px;
+    }
+
+    .compass {
+      position: relative;
+      width: 290px;
+      height: 290px;
+      border-radius: 50%;
+      border: 10px solid rgba(255,255,255,0.1);
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,0.08) 0 6%, transparent 7%),
+        radial-gradient(circle, #1f2937 0%, #0b1220 100%);
+      overflow: hidden;
+      box-shadow: inset 0 0 30px rgba(255,255,255,0.05), 0 10px 30px rgba(0,0,0,0.35);
+    }
+
+    .ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      transform: rotate(0deg);
+      transition: transform 0.15s linear;
+    }
+
+    .marker {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      transform: translateX(-50%);
+      font-weight: bold;
+      font-size: 20px;
+      color: #ef4444;
+    }
+
+    .dir {
+      position: absolute;
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: bold;
+    }
+
+    .dir.n { top: 18px; left: 50%; transform: translateX(-50%); }
+    .dir.s { bottom: 18px; left: 50%; transform: translateX(-50%); }
+    .dir.e { right: 18px; top: 50%; transform: translateY(-50%); }
+    .dir.w { left: 18px; top: 50%; transform: translateY(-50%); }
+
+    .arrow {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      transform: translate(-50%, -100%) rotate(0deg);
+      transform-origin: 50% 100%;
+      transition: transform 0.15s linear;
+    }
+
+    .arrow::before {
+      content: "";
+      display: block;
+      width: 0;
+      height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-bottom: 110px solid var(--accent);
+      filter: drop-shadow(0 0 8px rgba(34,197,94,0.45));
+    }
+
+    .center-dot {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 6px rgba(255,255,255,0.08);
+      z-index: 2;
+    }
+
+    .data {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .small {
+      margin-top: 18px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 16px;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(90deg, var(--accent), #16a34a);
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .danger { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Boussole GPS</h1>
+    <p class="sub">
+      Cette page demande la position automatiquement et indique la direction ainsi que la distance jusqu'au point cible.
+    </p>
+
+    <div class="status" id="status">Initialisation…</div>
+
+    <div class="compass-wrap">
+      <div class="compass">
+        <div class="ring" id="ring">
+          <div class="marker">N</div>
+          <div class="dir n">N</div>
+          <div class="dir e">E</div>
+          <div class="dir s">S</div>
+          <div class="dir w">O</div>
+        </div>
+        <div class="arrow" id="arrow"></div>
+        <div class="center-dot"></div>
+      </div>
+    </div>
+
+    <div class="data">
+      <div class="card">
+        <div class="label">Distance</div>
+        <div class="value" id="distance">-- m</div>
+      </div>
+      <div class="card">
+        <div class="label">Cap appareil</div>
+        <div class="value" id="heading">--°</div>
+      </div>
+      <div class="card">
+        <div class="label">Azimut cible</div>
+        <div class="value" id="bearing">--°</div>
+      </div>
+      <div class="card">
+        <div class="label">Position GPS</div>
+        <div class="value" id="gps">--</div>
+      </div>
+    </div>
+
+    <button class="btn" id="orientationBtn" style="display:none;">Activer la boussole</button>
+
+    <p class="small">
+      Modifie les coordonnées dans le code pour choisir ton point cible. Pour une utilisation réelle, héberge la page en HTTPS.
+    </p>
+  </div>
+
+  <script>
+    // =========================================================
+    // POINT CIBLE À MODIFIER
+    // Exemple : Saint-Quentin
+    // Mets ici la latitude et la longitude du lieu à atteindre
+    // =========================================================
+    const target = {
+      lat: 49.857082,
+      lon: 3.274832
+    };
+
+    const statusEl = document.getElementById('status');
+    const distanceEl = document.getElementById('distance');
+    const headingEl = document.getElementById('heading');
+    const bearingEl = document.getElementById('bearing');
+    const gpsEl = document.getElementById('gps');
+    const arrowEl = document.getElementById('arrow');
+    const ringEl = document.getElementById('ring');
+    const orientationBtn = document.getElementById('orientationBtn');
+
+    let userLat = null;
+    let userLon = null;
+    let deviceHeading = 0;
+    let targetBearing = 0;
+
+    function toRad(deg) {
+      return deg * Math.PI / 180;
+    }
+
+    function toDeg(rad) {
+      return rad * 180 / Math.PI;
+    }
+
+    function normalizeDeg(deg) {
+      return (deg + 360) % 360;
+    }
+
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function calculateBearing(lat1, lon1, lat2, lon2) {
+      const phi1 = toRad(lat1);
+      const phi2 = toRad(lat2);
+      const lambda1 = toRad(lon1);
+      const lambda2 = toRad(lon2);
+
+      const y = Math.sin(lambda2 - lambda1) * Math.cos(phi2);
+      const x = Math.cos(phi1) * Math.sin(phi2) -
+                Math.sin(phi1) * Math.cos(phi2) * Math.cos(lambda2 - lambda1);
+
+      return normalizeDeg(toDeg(Math.atan2(y, x)));
+    }
+
+    function updateUI() {
+      if (userLat === null || userLon === null) return;
+
+      const dist = haversineDistance(userLat, userLon, target.lat, target.lon);
+      targetBearing = calculateBearing(userLat, userLon, target.lat, target.lon);
+
+      const relativeAngle = normalizeDeg(targetBearing - deviceHeading);
+
+      distanceEl.textContent = dist < 1000
+        ? `${Math.round(dist)} m`
+        : `${(dist / 1000).toFixed(2)} km`;
+
+      headingEl.textContent = `${Math.round(deviceHeading)}°`;
+      bearingEl.textContent = `${Math.round(targetBearing)}°`;
+      gpsEl.textContent = `${userLat.toFixed(5)}, ${userLon.toFixed(5)}`;
+
+      // Le nord reste en haut : on fait tourner uniquement l'aiguille de destination
+      arrowEl.style.transform = `translate(-50%, -100%) rotate(${relativeAngle}deg)`;
+      ringEl.style.transform = `rotate(0deg)`;
+    }
+
+    function handlePosition(position) {
+      userLat = position.coords.latitude;
+      userLon = position.coords.longitude;
+      statusEl.textContent = 'Position GPS détectée.';
+      updateUI();
+    }
+
+    function handlePositionError(error) {
+      statusEl.innerHTML = `<span class="danger">Position refusée ou indisponible : ${error.message}</span>`;
+    }
+
+    function startGeolocation() {
+      if (!navigator.geolocation) {
+        statusEl.innerHTML = '<span class="danger">La géolocalisation n’est pas prise en charge sur cet appareil.</span>';
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(handlePosition, handlePositionError, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+
+      navigator.geolocation.watchPosition(handlePosition, handlePositionError, {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 10000
+      });
+    }
+
+    function handleOrientation(event) {
+      let heading = null;
+
+      // iPhone / Safari
+      if (typeof event.webkitCompassHeading === 'number') {
+        heading = event.webkitCompassHeading;
+      }
+      // Android / autres navigateurs
+      else if (event.alpha !== null) {
+        heading = 360 - event.alpha;
+      }
+
+      if (heading !== null) {
+        deviceHeading = normalizeDeg(heading);
+        statusEl.textContent = 'Boussole active.';
+        updateUI();
+      }
+    }
+
+    async function initOrientation() {
+      if (typeof DeviceOrientationEvent === 'undefined') {
+        statusEl.innerHTML = '<span class="danger">La boussole n’est pas prise en charge sur cet appareil.</span>';
+        return;
+      }
+
+      // Cas iPhone : permission nécessaire via action utilisateur
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        orientationBtn.style.display = 'block';
+        statusEl.textContent = 'Autorise la position puis appuie sur le bouton pour activer la boussole.';
+
+        orientationBtn.addEventListener('click', async () => {
+          try {
+            const response = await DeviceOrientationEvent.requestPermission();
+            if (response === 'granted') {
+              window.addEventListener('deviceorientation', handleOrientation, true);
+              orientationBtn.style.display = 'none';
+              statusEl.textContent = 'Boussole activée.';
+            } else {
+              statusEl.innerHTML = '<span class="danger">Autorisation boussole refusée.</span>';
+            }
+          } catch (err) {
+            statusEl.innerHTML = `<span class="danger">Erreur boussole : ${err.message}</span>`;
+          }
+        });
+      } else {
+        window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+        window.addEventListener('deviceorientation', handleOrientation, true);
+      }
+    }
+
+    function init() {
+      startGeolocation();
+      initOrientation();
+    }
+
+    init();
+  </script>
+</body>
+</html>
