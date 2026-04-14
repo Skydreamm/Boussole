@@ -414,10 +414,6 @@
     let rawHeading = 0;
     let smoothHeading = 0;
 
-    let rawNeedleAngle = 0;
-    let smoothNeedleAngle = 0;
-
-    let rawBearing = 0;
     let hasOrientation = false;
     let animationStarted = false;
     let lastTs = 0;
@@ -582,7 +578,6 @@
 
       const dist = haversineDistance(userLat, userLon, target.lat, target.lon);
       rawBearing = calculateBearing(userLat, userLon, target.lat, target.lon);
-      rawNeedleAngle = normalizeDeg(rawBearing - smoothHeading);
 
       distanceEl.textContent = dist < 1000
         ? `${Math.round(dist)} m`
@@ -597,8 +592,9 @@
       headingValueEl.textContent = String(Math.round(smoothHeading)).padStart(3, '0');
       cardinalEl.textContent = formatCardinal(smoothHeading);
 
+      // Le cadran tourne avec l'appareil, l'aiguille rouge reste le nord.
       dialEl.style.transform = `rotate(${-smoothHeading}deg)`;
-      needleEl.style.transform = `translate(-50%, -50%) rotate(${smoothNeedleAngle}deg)`;
+      needleEl.style.transform = `translate(-50%, -50%) rotate(0deg)`;
     }
 
     function startAnimation() {
@@ -610,16 +606,11 @@
         const dt = ts - lastTs;
         lastTs = ts;
 
-        const followHeading = Math.min(0.24, Math.max(0.09, dt / 110));
-        const followNeedle = Math.min(0.26, Math.max(0.1, dt / 100));
+        // Lissage renforcé mais réactif pour éviter les accoups
+        const normalizedDt = Math.min(2.2, Math.max(0.7, dt / 16.6667));
+        const followHeading = 1 - Math.pow(1 - 0.14, normalizedDt);
 
         smoothHeading = lerpAngle(smoothHeading, rawHeading, followHeading);
-
-        if (userLat !== null && userLon !== null) {
-          rawNeedleAngle = normalizeDeg(rawBearing - smoothHeading);
-        }
-
-        smoothNeedleAngle = lerpAngle(smoothNeedleAngle, rawNeedleAngle, followNeedle);
 
         renderCompass();
         updateGeoReadout();
