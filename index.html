@@ -84,54 +84,78 @@
 
     .ring {
       position: absolute;
-      inset: 0;
+      inset: 12px;
       border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.08);
+      background:
+        radial-gradient(circle, transparent 0 64%, rgba(255,255,255,0.03) 64% 65%, transparent 65%),
+        radial-gradient(circle, transparent 0 78%, rgba(255,255,255,0.03) 78% 79%, transparent 79%);
       transform: rotate(0deg);
       transition: transform 0.15s linear;
     }
 
-    .marker {
+    .north-triangle {
       position: absolute;
+      top: 8px;
       left: 50%;
-      top: 10px;
       transform: translateX(-50%);
-      font-weight: bold;
-      font-size: 20px;
-      color: #ef4444;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 20px solid #ef4444;
+      filter: drop-shadow(0 0 8px rgba(239,68,68,0.45));
     }
 
     .dir {
       position: absolute;
-      font-size: 16px;
+      font-size: 15px;
       color: var(--muted);
       font-weight: bold;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
     }
 
-    .dir.n { top: 18px; left: 50%; transform: translateX(-50%); }
-    .dir.s { bottom: 18px; left: 50%; transform: translateX(-50%); }
-    .dir.e { right: 18px; top: 50%; transform: translateY(-50%); }
-    .dir.w { left: 18px; top: 50%; transform: translateY(-50%); }
+    .dir.s { bottom: 12px; left: 50%; transform: translateX(-50%); }
+    .dir.e { right: 14px; top: 50%; transform: translateY(-50%); }
+    .dir.w { left: 14px; top: 50%; transform: translateY(-50%); }
 
     .arrow {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 0;
-      height: 0;
-      transform: translate(-50%, -100%) rotate(0deg);
-      transform-origin: 50% 100%;
+      width: 26px;
+      height: 130px;
+      transform: translate(-50%, -50%) rotate(0deg);
+      transform-origin: 50% 50%;
       transition: transform 0.15s linear;
+      z-index: 3;
+      filter: drop-shadow(0 0 10px rgba(34,197,94,0.28));
     }
 
     .arrow::before {
       content: "";
-      display: block;
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 16px solid transparent;
-      border-right: 16px solid transparent;
-      border-bottom: 110px solid var(--accent);
-      filter: drop-shadow(0 0 8px rgba(34,197,94,0.45));
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 82px solid var(--accent);
+    }
+
+    .arrow::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 62px;
+      background: linear-gradient(180deg, rgba(34,197,94,0.92) 0%, rgba(21,128,61,0.95) 100%);
+      clip-path: polygon(18% 0%, 82% 0%, 100% 100%, 0% 100%);
+      border-radius: 0 0 10px 10px;
     }
 
     .center-dot {
@@ -215,8 +239,7 @@
     <div class="compass-wrap">
       <div class="compass">
         <div class="ring" id="ring">
-          <div class="marker">N</div>
-          <div class="dir n">N</div>
+          <div class="north-triangle"></div>
           <div class="dir e">E</div>
           <div class="dir s">S</div>
           <div class="dir w">O</div>
@@ -329,9 +352,10 @@
       bearingEl.textContent = `${Math.round(targetBearing)}°`;
       gpsEl.textContent = `${userLat.toFixed(5)}, ${userLon.toFixed(5)}`;
 
-      // Le nord reste en haut : on fait tourner uniquement l'aiguille de destination
-      arrowEl.style.transform = `translate(-50%, -100%) rotate(${relativeAngle}deg)`;
-      ringEl.style.transform = `rotate(0deg)`;
+      // Le cadran pivote avec l'appareil pour garder un vrai comportement de boussole.
+      // Le triangle rouge du cadran montre le nord, et l'aiguille verte pointe vers la cible.
+      arrowEl.style.transform = `translate(-50%, -50%) rotate(${relativeAngle}deg)`;
+      ringEl.style.transform = `rotate(${-deviceHeading}deg)`;
     }
 
     function handlePosition(position) {
