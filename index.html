@@ -297,8 +297,18 @@
 
     let userLat = null;
     let userLon = null;
-    let deviceHeading = 0;
-    let targetBearing = 0;
+
+    // Mesures brutes
+    let rawDeviceHeading = 0;
+    let rawTargetBearing = 0;
+
+    // Valeurs lissées affichées
+    let smoothDeviceHeading = 0;
+    let smoothRelativeAngle = 0;
+
+    // Animation continue
+    let animationStarted = false;
+    let lastRenderTime = 0;
 
     function toRad(deg) {
       return deg * Math.PI / 180;
@@ -309,7 +319,15 @@
     }
 
     function normalizeDeg(deg) {
-      return (deg + 360) % 360;
+      return (deg % 360 + 360) % 360;
+    }
+
+    function shortestAngleDelta(from, to) {
+      return ((to - from + 540) % 360) - 180;
+    }
+
+    function lerpAngle(current, target, factor) {
+      return normalizeDeg(current + shortestAngleDelta(current, target) * factor);
     }
 
     function haversineDistance(lat1, lon1, lat2, lon2) {
@@ -340,22 +358,15 @@
       if (userLat === null || userLon === null) return;
 
       const dist = haversineDistance(userLat, userLon, target.lat, target.lon);
-      targetBearing = calculateBearing(userLat, userLon, target.lat, target.lon);
-
-      const relativeAngle = normalizeDeg(targetBearing - deviceHeading);
+      rawTargetBearing = calculateBearing(userLat, userLon, target.lat, target.lon);
 
       distanceEl.textContent = dist < 1000
         ? `${Math.round(dist)} m`
         : `${(dist / 1000).toFixed(2)} km`;
 
-      headingEl.textContent = `${Math.round(deviceHeading)}°`;
-      bearingEl.textContent = `${Math.round(targetBearing)}°`;
+      headingEl.textContent = `${Math.round(smoothDeviceHeading)}°`;
+      bearingEl.textContent = `${Math.round(rawTargetBearing)}°`;
       gpsEl.textContent = `${userLat.toFixed(5)}, ${userLon.toFixed(5)}`;
-
-      // Le cadran pivote avec l'appareil pour garder un vrai comportement de boussole.
-      // Le triangle rouge du cadran montre le nord, et l'aiguille verte pointe vers la cible.
-      arrowEl.style.transform = `translate(-50%, -50%) rotate(${relativeAngle}deg)`;
-      ringEl.style.transform = `rotate(${-deviceHeading}deg)`;
     }
 
     function handlePosition(position) {
@@ -391,29 +402,51 @@
     function handleOrientation(event) {
       let heading = null;
 
-      // iPhone / Safari
       if (typeof event.webkitCompassHeading === 'number') {
         heading = event.webkitCompassHeading;
-      }
-      // Android / autres navigateurs
-      else if (event.alpha !== null) {
+      } else if (event.alpha !== null) {
         heading = 360 - event.alpha;
       }
 
       if (heading !== null) {
-        deviceHeading = normalizeDeg(heading);
+        rawDeviceHeading = normalizeDeg(heading);
         statusEl.textContent = 'Boussole active.';
-        updateUI();
+        if (!animationStarted) startCompassAnimation();
       }
     }
 
-    async function initOrientation() {
+    async function startCompassAnimation() {
+      animationStarted = true;
+
+      const render = (timestamp) => {
+        if (!lastRenderTime) lastRenderTime = timestamp;
+        const deltaMs = timestamp - lastRenderTime;
+        lastRenderTime = timestamp;
+
+        // Facteur dynamique : plus fluide et stable selon la vitesse du navigateur
+        const follow = Math.min(0.22, Math.max(0.08, deltaMs / 120));
+
+        smoothDeviceHeading = lerpAngle(smoothDeviceHeading, rawDeviceHeading, follow);
+
+        const targetRelative = normalizeDeg(rawTargetBearing - smoothDeviceHeading);
+        smoothRelativeAngle = lerpAngle(smoothRelativeAngle, targetRelative, follow * 0.95);
+
+        arrowEl.style.transform = `translate(-50%, -50%) rotate(${smoothRelativeAngle}deg)`;
+        ringEl.style.transform = `rotate(${-smoothDeviceHeading}deg)`;
+
+        updateUI();
+        requestAnimationFrame(render);
+      };
+
+      requestAnimationFrame(render);
+    }
+
+    function initOrientation() {
       if (typeof DeviceOrientationEvent === 'undefined') {
         statusEl.innerHTML = '<span class="danger">La boussole n’est pas prise en charge sur cet appareil.</span>';
         return;
       }
 
-      // Cas iPhone : permission nécessaire via action utilisateur
       if (typeof DeviceOrientationEvent.requestPermission === 'function') {
         orientationBtn.style.display = 'block';
         statusEl.textContent = 'Autorise la position puis appuie sur le bouton pour activer la boussole.';
@@ -431,7 +464,7 @@
           } catch (err) {
             statusEl.innerHTML = `<span class="danger">Erreur boussole : ${err.message}</span>`;
           }
-        });
+        }, { once: true });
       } else {
         window.addEventListener('deviceorientationabsolute', handleOrientation, true);
         window.addEventListener('deviceorientation', handleOrientation, true);
@@ -441,6 +474,7 @@
     function init() {
       startGeolocation();
       initOrientation();
+      updateUI();
     }
 
     init();
