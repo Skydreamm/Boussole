@@ -3,175 +3,254 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Boussole GPS</title>
+  <title>Boussole GPS Précise</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --muted: #94a3b8;
-      --text: #f8fafc;
+      --bg: #eef2f7;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
       --accent: #22c55e;
-      --accent-2: #38bdf8;
+      --accent-dark: #15803d;
       --danger: #ef4444;
-      --border: rgba(255,255,255,0.08);
+      --border: rgba(15, 23, 42, 0.08);
+      --shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at top, #ffffff 0%, #eef2f7 45%, #dde5ef 100%);
+      color: var(--text);
+    }
 
     body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, Helvetica, sans-serif;
-      background: radial-gradient(circle at top, #1e293b 0%, var(--bg) 55%);
-      color: var(--text);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
     }
 
     .app {
       width: 100%;
-      max-width: 460px;
-      background: rgba(17, 24, 39, 0.95);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-      padding: 24px;
-      backdrop-filter: blur(10px);
+      max-width: 520px;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(255,255,255,0.7);
+      box-shadow: var(--shadow);
+      border-radius: 28px;
+      backdrop-filter: blur(18px);
+      padding: 26px;
+    }
+
+    .top {
+      text-align: center;
+      margin-bottom: 18px;
     }
 
     h1 {
-      margin: 0 0 6px;
-      font-size: 28px;
-      text-align: center;
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
     }
 
     .sub {
-      margin: 0 0 22px;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.45;
+      margin: 8px 0 0;
       font-size: 14px;
+      color: var(--muted);
+      line-height: 1.45;
     }
 
     .status {
+      min-height: 22px;
+      margin: 14px 0 20px;
       text-align: center;
       font-size: 14px;
-      margin-bottom: 18px;
-      color: var(--accent-2);
-      min-height: 22px;
+      color: #2563eb;
     }
 
-    .compass-wrap {
+    .compass-zone {
       display: flex;
       justify-content: center;
-      margin: 14px 0 24px;
+      align-items: center;
+      margin: 6px 0 22px;
+    }
+
+    .compass-shell {
+      position: relative;
+      width: 340px;
+      height: 340px;
+    }
+
+    .north-indicator {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-bottom: 24px solid #f59e0b;
+      filter: drop-shadow(0 5px 12px rgba(245, 158, 11, 0.42));
     }
 
     .compass {
-      position: relative;
-      width: 290px;
-      height: 290px;
+      position: absolute;
+      inset: 18px;
       border-radius: 50%;
-      border: 10px solid rgba(255,255,255,0.1);
-      background:
-        radial-gradient(circle at center, rgba(255,255,255,0.08) 0 6%, transparent 7%),
-        radial-gradient(circle, #1f2937 0%, #0b1220 100%);
+      background: linear-gradient(180deg, #4b5563 0%, #111827 100%);
+      box-shadow:
+        inset 0 8px 18px rgba(255,255,255,0.08),
+        inset 0 -10px 20px rgba(0,0,0,0.26),
+        0 14px 32px rgba(15,23,42,0.22);
       overflow: hidden;
-      box-shadow: inset 0 0 30px rgba(255,255,255,0.05), 0 10px 30px rgba(0,0,0,0.35);
     }
 
-    .ring {
+    .compass::before {
+      content: "";
       position: absolute;
-      inset: 12px;
+      inset: 8px;
       border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.08);
-      background:
-        radial-gradient(circle, transparent 0 64%, rgba(255,255,255,0.03) 64% 65%, transparent 65%),
-        radial-gradient(circle, transparent 0 78%, rgba(255,255,255,0.03) 78% 79%, transparent 79%);
-      transform: rotate(0deg);
-      transition: transform 0.15s linear;
+      background: radial-gradient(circle at 50% 40%, #3f4755 0%, #1f2937 58%, #111827 100%);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.05);
     }
 
-    .north-triangle {
+    .dial {
       position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 10px solid transparent;
-      border-right: 10px solid transparent;
-      border-bottom: 20px solid #ef4444;
-      filter: drop-shadow(0 0 8px rgba(239,68,68,0.45));
+      inset: 10px;
+      border-radius: 50%;
+      z-index: 2;
+      transition: none;
+      will-change: transform;
     }
 
-    .dir {
-      position: absolute;
-      font-size: 15px;
-      color: var(--muted);
-      font-weight: bold;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+    .dial-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
-    .dir.s { bottom: 12px; left: 50%; transform: translateX(-50%); }
-    .dir.e { right: 14px; top: 50%; transform: translateY(-50%); }
-    .dir.w { left: 14px; top: 50%; transform: translateY(-50%); }
-
-    .arrow {
+    .needle {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 26px;
-      height: 130px;
+      width: 34px;
+      height: 236px;
       transform: translate(-50%, -50%) rotate(0deg);
       transform-origin: 50% 50%;
-      transition: transform 0.15s linear;
-      z-index: 3;
-      filter: drop-shadow(0 0 10px rgba(34,197,94,0.28));
+      z-index: 10;
+      will-change: transform;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.28));
     }
 
-    .arrow::before {
-      content: "";
+    .needle-top {
       position: absolute;
+      top: 6px;
       left: 50%;
-      top: 0;
       transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 8px solid transparent;
-      border-right: 8px solid transparent;
-      border-bottom: 82px solid var(--accent);
+      border-left: 11px solid transparent;
+      border-right: 11px solid transparent;
+      border-bottom: 106px solid #ef4444;
+      filter: drop-shadow(0 0 6px rgba(239,68,68,0.35));
     }
 
-    .arrow::after {
-      content: "";
+    .needle-bottom {
       position: absolute;
+      bottom: 10px;
       left: 50%;
-      bottom: 0;
       transform: translateX(-50%);
-      width: 20px;
-      height: 62px;
-      background: linear-gradient(180deg, rgba(34,197,94,0.92) 0%, rgba(21,128,61,0.95) 100%);
-      clip-path: polygon(18% 0%, 82% 0%, 100% 100%, 0% 100%);
-      border-radius: 0 0 10px 10px;
+      width: 0;
+      height: 0;
+      border-left: 11px solid transparent;
+      border-right: 11px solid transparent;
+      border-top: 106px solid #3b82f6;
+      filter: drop-shadow(0 0 6px rgba(59,130,246,0.35));
     }
 
-    .center-dot {
+    .needle-center {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 18px;
-      height: 18px;
-      background: #fff;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 0 6px rgba(255,255,255,0.08);
-      z-index: 2;
+      background: radial-gradient(circle at 35% 35%, #fde68a 0%, #f59e0b 55%, #92400e 100%);
+      border: 2px solid rgba(120, 53, 15, 0.6);
+      box-shadow: 0 0 0 6px rgba(255,255,255,0.05);
     }
 
-    .data {
+    .center-core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: #111827;
+      z-index: 12;
+    }
+
+    .readout {
+      margin: 2px auto 18px;
+      width: min(100%, 280px);
+      background: #111827;
+      color: white;
+      border-radius: 22px;
+      padding: 14px 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 12px 24px rgba(15,23,42,0.16);
+      text-align: center;
+    }
+
+    .readout-main {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .readout-letter {
+      font-size: 28px;
+      font-weight: 700;
+      color: #f87171;
+      width: 34px;
+      text-align: right;
+    }
+
+    .readout-value {
+      font-size: 54px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      min-width: 3ch;
+    }
+
+    .readout-deg {
+      font-size: 28px;
+      color: #94a3b8;
+    }
+
+    .readout-label {
+      margin-top: 4px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
@@ -179,136 +258,169 @@
     }
 
     .card {
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.76);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 14px;
       text-align: center;
+      box-shadow: 0 8px 18px rgba(15,23,42,0.05);
     }
 
     .label {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--muted);
-      margin-bottom: 6px;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
     }
 
     .value {
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .small {
-      margin-top: 18px;
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.5;
-      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.15;
+      word-break: break-word;
     }
 
     .btn {
       width: 100%;
-      margin-top: 16px;
       border: none;
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 14px 16px;
-      font-size: 15px;
-      font-weight: bold;
+      margin-top: 16px;
+      background: linear-gradient(90deg, #2563eb, #1d4ed8);
       color: white;
-      background: linear-gradient(90deg, var(--accent), #16a34a);
+      font-size: 15px;
+      font-weight: 700;
       cursor: pointer;
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
     }
 
     .btn:hover {
       filter: brightness(1.05);
     }
 
-    .danger { color: var(--danger); }
+    .foot {
+      margin-top: 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .danger {
+      color: var(--danger);
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        padding: 18px;
+        border-radius: 22px;
+      }
+
+      .compass-shell {
+        width: 300px;
+        height: 300px;
+      }
+
+      .readout-value {
+        font-size: 46px;
+      }
+
+      .value {
+        font-size: 19px;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="app">
-    <h1>Boussole GPS</h1>
-    <p class="sub">
-      Cette page demande la position automatiquement et indique la direction ainsi que la distance jusqu'au point cible.
-    </p>
+    <div class="top">
+      <h1>Boussole GPS</h1>
+      <p class="sub">Autorise la position et l’orientation pour afficher une boussole très précise vers ta destination.</p>
+    </div>
 
     <div class="status" id="status">Initialisation…</div>
 
-    <div class="compass-wrap">
-      <div class="compass">
-        <div class="ring" id="ring">
-          <div class="north-triangle"></div>
-          <div class="dir e">E</div>
-          <div class="dir s">S</div>
-          <div class="dir w">O</div>
+    <div class="compass-zone">
+      <div class="compass-shell">
+        <div class="north-indicator"></div>
+        <div class="compass">
+          <div class="dial" id="dial"></div>
+          <div class="needle" id="needle">
+            <div class="needle-top"></div>
+            <div class="needle-bottom"></div>
+            <div class="needle-center"></div>
+            <div class="center-core"></div>
+          </div>
         </div>
-        <div class="arrow" id="arrow"></div>
-        <div class="center-dot"></div>
       </div>
     </div>
 
-    <div class="data">
+    <div class="readout">
+      <div class="readout-main">
+        <span class="readout-letter" id="cardinal">N</span>
+        <span class="readout-value" id="headingValue">0</span>
+        <span class="readout-deg">°</span>
+      </div>
+      <div class="readout-label">Cap appareil</div>
+    </div>
+
+    <div class="grid">
       <div class="card">
         <div class="label">Distance</div>
-        <div class="value" id="distance">-- m</div>
-      </div>
-      <div class="card">
-        <div class="label">Cap appareil</div>
-        <div class="value" id="heading">--°</div>
+        <div class="value" id="distance">--</div>
       </div>
       <div class="card">
         <div class="label">Azimut cible</div>
-        <div class="value" id="bearing">--°</div>
+        <div class="value" id="bearing">--</div>
       </div>
       <div class="card">
-        <div class="label">Position GPS</div>
-        <div class="value" id="gps">--</div>
+        <div class="label">Latitude</div>
+        <div class="value" id="lat">--</div>
+      </div>
+      <div class="card">
+        <div class="label">Longitude</div>
+        <div class="value" id="lon">--</div>
       </div>
     </div>
 
     <button class="btn" id="orientationBtn" style="display:none;">Activer la boussole</button>
 
-    <p class="small">
-      Modifie les coordonnées dans le code pour choisir ton point cible. Pour une utilisation réelle, héberge la page en HTTPS.
-    </p>
+    <div class="foot">
+      Modifie simplement les coordonnées de destination dans le code. Pour une vraie utilisation sur téléphone, ouvre la page en HTTPS.
+    </div>
   </div>
 
   <script>
-    // =========================================================
-    // POINT CIBLE À MODIFIER
-    // Exemple : Saint-Quentin
-    // Mets ici la latitude et la longitude du lieu à atteindre
-    // =========================================================
     const target = {
-      lat: 49.857082,
-      lon: 3.274832
+      lat: 49.8489,
+      lon: 3.2870
     };
 
     const statusEl = document.getElementById('status');
+    const dialEl = document.getElementById('dial');
+    const needleEl = document.getElementById('needle');
+    const headingValueEl = document.getElementById('headingValue');
+    const cardinalEl = document.getElementById('cardinal');
     const distanceEl = document.getElementById('distance');
-    const headingEl = document.getElementById('heading');
     const bearingEl = document.getElementById('bearing');
-    const gpsEl = document.getElementById('gps');
-    const arrowEl = document.getElementById('arrow');
-    const ringEl = document.getElementById('ring');
+    const latEl = document.getElementById('lat');
+    const lonEl = document.getElementById('lon');
     const orientationBtn = document.getElementById('orientationBtn');
 
     let userLat = null;
     let userLon = null;
 
-    // Mesures brutes
-    let rawDeviceHeading = 0;
-    let rawTargetBearing = 0;
+    let rawHeading = 0;
+    let smoothHeading = 0;
 
-    // Valeurs lissées affichées
-    let smoothDeviceHeading = 0;
-    let smoothRelativeAngle = 0;
+    let rawNeedleAngle = 0;
+    let smoothNeedleAngle = 0;
 
-    // Animation continue
+    let rawBearing = 0;
+    let hasOrientation = false;
     let animationStarted = false;
-    let lastRenderTime = 0;
+    let lastTs = 0;
 
     function toRad(deg) {
       return deg * Math.PI / 180;
@@ -330,13 +442,18 @@
       return normalizeDeg(current + shortestAngleDelta(current, target) * factor);
     }
 
+    function formatCardinal(deg) {
+      const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
+      return dirs[Math.round(normalizeDeg(deg) / 45) % 8];
+    }
+
     function haversineDistance(lat1, lon1, lat2, lon2) {
       const R = 6371000;
       const dLat = toRad(lat2 - lat1);
       const dLon = toRad(lon2 - lon1);
       const a = Math.sin(dLat / 2) ** 2 +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLon / 2) ** 2;
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) ** 2;
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
     }
@@ -349,31 +466,177 @@
 
       const y = Math.sin(lambda2 - lambda1) * Math.cos(phi2);
       const x = Math.cos(phi1) * Math.sin(phi2) -
-                Math.sin(phi1) * Math.cos(phi2) * Math.cos(lambda2 - lambda1);
+        Math.sin(phi1) * Math.cos(phi2) * Math.cos(lambda2 - lambda1);
 
       return normalizeDeg(toDeg(Math.atan2(y, x)));
     }
 
-    function updateUI() {
+    function createCompassDial() {
+      const NS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('viewBox', '0 0 200 200');
+      svg.setAttribute('class', 'dial-svg');
+
+      const defs = document.createElementNS(NS, 'defs');
+
+      const radial = document.createElementNS(NS, 'radialGradient');
+      radial.setAttribute('id', 'dialGradient');
+      radial.setAttribute('cx', '50%');
+      radial.setAttribute('cy', '50%');
+      radial.setAttribute('r', '50%');
+
+      const stop1 = document.createElementNS(NS, 'stop');
+      stop1.setAttribute('offset', '0%');
+      stop1.setAttribute('stop-color', '#374151');
+
+      const stop2 = document.createElementNS(NS, 'stop');
+      stop2.setAttribute('offset', '100%');
+      stop2.setAttribute('stop-color', '#111827');
+
+      radial.appendChild(stop1);
+      radial.appendChild(stop2);
+      defs.appendChild(radial);
+      svg.appendChild(defs);
+
+      const circle = document.createElementNS(NS, 'circle');
+      circle.setAttribute('cx', '100');
+      circle.setAttribute('cy', '100');
+      circle.setAttribute('r', '98');
+      circle.setAttribute('fill', 'url(#dialGradient)');
+      circle.setAttribute('stroke', '#4b5563');
+      circle.setAttribute('stroke-width', '2');
+      svg.appendChild(circle);
+
+      for (let deg = 0; deg < 360; deg += 5) {
+        const line = document.createElementNS(NS, 'line');
+        line.setAttribute('x1', '100');
+        line.setAttribute('y1', '5');
+        line.setAttribute('x2', '100');
+
+        if (deg % 90 === 0) {
+          line.setAttribute('y2', '22');
+          line.setAttribute('stroke', '#f8fafc');
+          line.setAttribute('stroke-width', '2.6');
+        } else if (deg % 30 === 0) {
+          line.setAttribute('y2', '16');
+          line.setAttribute('stroke', '#9ca3af');
+          line.setAttribute('stroke-width', '1.5');
+        } else if (deg % 45 === 0) {
+          line.setAttribute('y2', '18');
+          line.setAttribute('stroke', '#6b7280');
+          line.setAttribute('stroke-width', '0.9');
+        } else {
+          line.setAttribute('y2', '11');
+          line.setAttribute('stroke', '#4b5563');
+          line.setAttribute('stroke-width', '0.6');
+        }
+
+        line.setAttribute('transform', `rotate(${deg} 100 100)`);
+        svg.appendChild(line);
+      }
+
+      for (let deg = 0; deg < 360; deg += 30) {
+        const angle = toRad(deg - 90);
+        const x = 100 + 78 * Math.cos(angle);
+        const y = 100 + 78 * Math.sin(angle);
+        const text = document.createElementNS(NS, 'text');
+        text.setAttribute('x', x.toFixed(2));
+        text.setAttribute('y', y.toFixed(2));
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'middle');
+        text.setAttribute('font-size', '8');
+        text.setAttribute('font-weight', '700');
+        text.setAttribute('fill', '#9ca3af');
+        text.textContent = String(deg);
+        svg.appendChild(text);
+      }
+
+      const labels = [
+        { t: 'N', x: 100, y: 35, size: 17, fill: '#ef4444' },
+        { t: 'S', x: 100, y: 171, size: 13, fill: '#e5e7eb' },
+        { t: 'E', x: 168, y: 103, size: 13, fill: '#e5e7eb' },
+        { t: 'O', x: 32, y: 103, size: 13, fill: '#e5e7eb' },
+        { t: 'NE', x: 147, y: 56, size: 10, fill: '#6b7280' },
+        { t: 'SE', x: 147, y: 150, size: 10, fill: '#6b7280' },
+        { t: 'SO', x: 53, y: 150, size: 10, fill: '#6b7280' },
+        { t: 'NO', x: 53, y: 56, size: 10, fill: '#6b7280' }
+      ];
+
+      for (const label of labels) {
+        const text = document.createElementNS(NS, 'text');
+        text.setAttribute('x', String(label.x));
+        text.setAttribute('y', String(label.y));
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-size', String(label.size));
+        text.setAttribute('font-weight', '700');
+        text.setAttribute('fill', label.fill);
+        text.textContent = label.t;
+        svg.appendChild(text);
+      }
+
+      dialEl.appendChild(svg);
+    }
+
+    function updateGeoReadout() {
       if (userLat === null || userLon === null) return;
 
       const dist = haversineDistance(userLat, userLon, target.lat, target.lon);
-      rawTargetBearing = calculateBearing(userLat, userLon, target.lat, target.lon);
+      rawBearing = calculateBearing(userLat, userLon, target.lat, target.lon);
+      rawNeedleAngle = normalizeDeg(rawBearing - smoothHeading);
 
       distanceEl.textContent = dist < 1000
         ? `${Math.round(dist)} m`
         : `${(dist / 1000).toFixed(2)} km`;
 
-      headingEl.textContent = `${Math.round(smoothDeviceHeading)}°`;
-      bearingEl.textContent = `${Math.round(rawTargetBearing)}°`;
-      gpsEl.textContent = `${userLat.toFixed(5)}, ${userLon.toFixed(5)}`;
+      bearingEl.textContent = `${Math.round(rawBearing)}°`;
+      latEl.textContent = userLat.toFixed(5);
+      lonEl.textContent = userLon.toFixed(5);
+    }
+
+    function renderCompass() {
+      headingValueEl.textContent = String(Math.round(smoothHeading)).padStart(3, '0');
+      cardinalEl.textContent = formatCardinal(smoothHeading);
+
+      dialEl.style.transform = `rotate(${-smoothHeading}deg)`;
+      needleEl.style.transform = `translate(-50%, -50%) rotate(${smoothNeedleAngle}deg)`;
+    }
+
+    function startAnimation() {
+      if (animationStarted) return;
+      animationStarted = true;
+
+      const loop = (ts) => {
+        if (!lastTs) lastTs = ts;
+        const dt = ts - lastTs;
+        lastTs = ts;
+
+        const followHeading = Math.min(0.24, Math.max(0.09, dt / 110));
+        const followNeedle = Math.min(0.26, Math.max(0.1, dt / 100));
+
+        smoothHeading = lerpAngle(smoothHeading, rawHeading, followHeading);
+
+        if (userLat !== null && userLon !== null) {
+          rawNeedleAngle = normalizeDeg(rawBearing - smoothHeading);
+        }
+
+        smoothNeedleAngle = lerpAngle(smoothNeedleAngle, rawNeedleAngle, followNeedle);
+
+        renderCompass();
+        updateGeoReadout();
+        requestAnimationFrame(loop);
+      };
+
+      requestAnimationFrame(loop);
     }
 
     function handlePosition(position) {
       userLat = position.coords.latitude;
       userLon = position.coords.longitude;
-      statusEl.textContent = 'Position GPS détectée.';
-      updateUI();
+      statusEl.textContent = hasOrientation
+        ? 'Position et orientation détectées.'
+        : 'Position détectée. En attente de la boussole…';
+      updateGeoReadout();
+      startAnimation();
     }
 
     function handlePositionError(error) {
@@ -399,46 +662,29 @@
       });
     }
 
+    function applyOrientationHeading(value) {
+      rawHeading = normalizeDeg(value);
+      hasOrientation = true;
+      statusEl.textContent = userLat === null
+        ? 'Orientation détectée. En attente de la position…'
+        : 'Boussole active.';
+      startAnimation();
+    }
+
     function handleOrientation(event) {
       let heading = null;
 
       if (typeof event.webkitCompassHeading === 'number') {
         heading = event.webkitCompassHeading;
-      } else if (event.alpha !== null) {
+      } else if (event.absolute === true && event.alpha != null) {
+        heading = 360 - event.alpha;
+      } else if (event.alpha != null) {
         heading = 360 - event.alpha;
       }
 
-      if (heading !== null) {
-        rawDeviceHeading = normalizeDeg(heading);
-        statusEl.textContent = 'Boussole active.';
-        if (!animationStarted) startCompassAnimation();
+      if (heading !== null && Number.isFinite(heading)) {
+        applyOrientationHeading(heading);
       }
-    }
-
-    async function startCompassAnimation() {
-      animationStarted = true;
-
-      const render = (timestamp) => {
-        if (!lastRenderTime) lastRenderTime = timestamp;
-        const deltaMs = timestamp - lastRenderTime;
-        lastRenderTime = timestamp;
-
-        // Facteur dynamique : plus fluide et stable selon la vitesse du navigateur
-        const follow = Math.min(0.22, Math.max(0.08, deltaMs / 120));
-
-        smoothDeviceHeading = lerpAngle(smoothDeviceHeading, rawDeviceHeading, follow);
-
-        const targetRelative = normalizeDeg(rawTargetBearing - smoothDeviceHeading);
-        smoothRelativeAngle = lerpAngle(smoothRelativeAngle, targetRelative, follow * 0.95);
-
-        arrowEl.style.transform = `translate(-50%, -50%) rotate(${smoothRelativeAngle}deg)`;
-        ringEl.style.transform = `rotate(${-smoothDeviceHeading}deg)`;
-
-        updateUI();
-        requestAnimationFrame(render);
-      };
-
-      requestAnimationFrame(render);
     }
 
     function initOrientation() {
@@ -449,20 +695,20 @@
 
       if (typeof DeviceOrientationEvent.requestPermission === 'function') {
         orientationBtn.style.display = 'block';
-        statusEl.textContent = 'Autorise la position puis appuie sur le bouton pour activer la boussole.';
+        statusEl.textContent = 'Autorise la position puis active la boussole.';
 
         orientationBtn.addEventListener('click', async () => {
           try {
-            const response = await DeviceOrientationEvent.requestPermission();
-            if (response === 'granted') {
+            const result = await DeviceOrientationEvent.requestPermission();
+            if (result === 'granted') {
               window.addEventListener('deviceorientation', handleOrientation, true);
               orientationBtn.style.display = 'none';
               statusEl.textContent = 'Boussole activée.';
             } else {
-              statusEl.innerHTML = '<span class="danger">Autorisation boussole refusée.</span>';
+              statusEl.innerHTML = '<span class="danger">Autorisation orientation refusée.</span>';
             }
           } catch (err) {
-            statusEl.innerHTML = `<span class="danger">Erreur boussole : ${err.message}</span>`;
+            statusEl.innerHTML = `<span class="danger">Erreur orientation : ${err.message}</span>`;
           }
         }, { once: true });
       } else {
@@ -472,9 +718,10 @@
     }
 
     function init() {
+      createCompassDial();
+      renderCompass();
       startGeolocation();
       initOrientation();
-      updateUI();
     }
 
     init();
